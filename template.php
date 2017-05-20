@@ -2,14 +2,14 @@
 
 /*		XML FORMAT
 <xml>
-	<page url='index'> 																					#the page will be used as it is
+	<page label='index'> 																					#the page will be used as it is
 		<assets>
 			<asset type='css/script...' name='filename' />
 		</assets>
 		<node type="asset-(path)/static-(tag)/part-(path)/text-(text)" id='element_id' class='element_class' meta_args="arg;arg2"/>
 	</page>
 	
-	<page url='url' parent='parent_url'>																#the page nodes will be applied to its parent e.g. index
+	<page label='label' parent='parent_url'>																#the page nodes will be applied to its parent e.g. index
 		<assets>
 			<asset type='css/script...' name='filename' />
 		</assets>
@@ -19,52 +19,35 @@
 </xml>
 */
 
-$CURRENT_MODULE = "Template v0.0B";
-append_log("Loading Templates");
 
-$PAGE_TEMPLATE = new PageManager(simplexml_load_file("pages.xml"));
 
 class Pagemanager{
 	
 	private $XML_DATA;
+	public $ASSETS_ROOT;
 	
-	function __construct($xml_data){
+	function __construct($xml_data, $asset_root){
 		$this->XML_DATA = $xml_data;
+		$this->ASSETS_ROOT = $asset_root;
 	}
 	
-	function get_page($url, $context = null){
-		$str = "page[@url='".$url."']";
-		append_log("Looking up page config: ".$url);
+	function get_page($label){
+		$str = "page[@label='".$label."']";
+		__APPEND_LOG("Looking up page config: ".$label);
 		$page = $this->XML_DATA->xpath($str);
 		
 		if($page){
-			append_log("Page found");
-			return new Page($page[0], $this, $context);
+			__APPEND_LOG("Page found");
+			return new Page($page[0], $this);
 		}else{
-			append_log("No such page found");
+			__APPEND_LOG("No such page found");
 			return new Page($this->XML_DATA->xpath("page[@url='404']")[0], $this);
 		}
 	}
-}
-
-class Asset_Pages{
 	
-	private $TYPE, $FILE;
-	
-	function __construct($xml_data){
-		$this->TYPE = $xml_data['type'];
-		$this->FILE = $xml_data['file'];
-	}
-	
-	function render(){
-		switch($this->TYPE){
-			case "css":
-				echo "<link rel='stylesheet' type='text/css' href='../css/".$this->FILE."'/>";
-			break;
-			case "script":
-				echo "<script src='../js/".$this->FILE."'/>";
-			break;
-		}
+	function __destruct(){
+		$this->XML_DATA = null;
+		unset($this->XML_DATA);
 	}
 }
 
@@ -79,7 +62,7 @@ class Page{
 			$this->DOCTYPE = $xml_data['doctype'];
 		}
 		$this->MANAGER = $pman;
-		append_log("Building nodes");
+		__APPEND_LOG("Building nodes");
 		foreach($xml_data->node as $node){
 			array_push($this->NODES, new Node($node, $this));
 		}
@@ -87,7 +70,7 @@ class Page{
 		if(@$xml_data['parent']){
 			$parent = $this->MANAGER->get_page($xml_data['parent']);
 			if(@$parent){
-				append_log("Applying parent overwrite.");
+				__APPEND_LOG("Applying parent overwrite.");
 				$this->DOCTYPE = $parent->DOCTYPE;
 				$this->NODES = $parent->apply_child($this);
 			}
@@ -95,7 +78,7 @@ class Page{
 	}
 	
 	function render($context){
-		append_log("Rendering page");
+		__APPEND_LOG("Rendering page");
 		echo "<!DOCTYPE ".$this->DOCTYPE.">";
 		foreach($this->NODES as $n){
 			$n->render($context);
@@ -104,7 +87,7 @@ class Page{
 	}
 		
 	function apply_child($page){
-		append_log("Applying overwrite to children");
+		__APPEND_LOG("Applying overwrite to children");
 		foreach($page->NODES as $n){
 			$path = explode("/",$n->OVERWRITE[0]);
 			$path= array_reverse($path);
@@ -112,6 +95,11 @@ class Page{
 		}
 		
 		return $this->NODES;
+	}
+	
+	function __destruct(){
+		unset($this->MANAGER);
+		unset($this->NODES);
 	}
 }
 
@@ -127,14 +115,14 @@ class Node{
 		$this->TYPE = $typedata[0];
 		$this->CONTEXT_VALUE = $typedata[1];
 		$this->META_ARGS = $xml_data['meta_args'];
-		append_log("Building node: ".$this->TYPE);
+		__APPEND_LOG("Building node: ".$this->TYPE);
 		$this->CLASS = $xml_data['class'];
 		$this->ID = $xml_data['id'];
 		
 		if($xml_data['overwrite']){
 			
 			$this->OVERWRITE = explode('-',$xml_data['overwrite']);
-			append_log("Overwrite found: ".print_r($this->OVERWRITE, true));
+			__APPEND_LOG("Overwrite found: ".print_r($this->OVERWRITE, true));
 		}
 		
 		
@@ -151,16 +139,16 @@ class Node{
 	}
 	
 	function overwrite($path, $prot, $obj){
-		append_log("Overwrite search -- STACK: ".print_r($path, true));
+		__APPEND_LOG("Overwrite search -- STACK: ".print_r($path, true));
 		$target = array_pop($path);
-		append_log("Overwrite search -- CURRENT: ".$target);
+		__APPEND_LOG("Overwrite search -- CURRENT: ".$target);
 
 		foreach($this->CHILDREN as $k=>$c){
 			
 			switch(substr($target, 0, 1)){
 				case "#":
 					if($c->ID == substr($target, 1, strlen($target)-1)){
-						append_log("Overwrite search -- CHILD: ".$c->ID);
+						__APPEND_LOG("Overwrite search -- CHILD: ".$c->ID);
 						if(empty($path)){
 							$c->apply_overwrite($k, $obj, $prot);
 						}else{
@@ -171,7 +159,7 @@ class Node{
 					break;
 				case ".":
 					if($c->CLASS == substr($target, 1, strlen($target)-1)){
-						append_log("Overwrite search -- CHILD: ".$c->CLASS);
+						__APPEND_LOG("Overwrite search -- CHILD: ".$c->CLASS);
 						if(empty($path)){
 							$c->apply_overwrite($k, $obj, $prot);
 						}else{
@@ -182,7 +170,7 @@ class Node{
 					break;
 				default:
 					if($c->CONTEXT_VALUE == $target){
-						append_log("Overwrite search -- CHILD: ".$c->CONTEXT_VALUE);
+						__APPEND_LOG("Overwrite search -- CHILD: ".$c->CONTEXT_VALUE);
 						if(empty($path)){
 							$c->apply_overwrite($k, $obj, $prot);
 						}else{
@@ -250,14 +238,17 @@ class Node{
 				break;
 								
 			case "asset":
-				global $ASSETS_ROOT;
-				include($ASSETS_ROOT.$this->CONTEXT_VALUE);
+				include($this->PAGE->MANAGER->ASSETS_ROOT.$this->CONTEXT_VALUE);
 				break;
 			
 			case "text":
 				echo $this->CONTEXT_VALUE;
 				break;
 		}
+	}
+	
+	function __destruct(){
+		unset($this->CHILDREN);
 	}
 }
 
