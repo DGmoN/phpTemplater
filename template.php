@@ -44,11 +44,14 @@ class Pagemanager{
 			return new Page($this->XML_DATA->xpath("page[@url='404']")[0], $this);
 		}
 	}
+<<<<<<< HEAD
 	
 	function __destruct(){
 		$this->XML_DATA = null;
 		unset($this->XML_DATA);
 	}
+=======
+>>>>>>> 2b411c602f2720fa7a86d88c2af9212d38ed2033
 }
 
 class Page{

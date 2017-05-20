@@ -16,12 +16,18 @@ class phpTemplaterModule extends Module{
 	}
 	
 	public function Load(){
+<<<<<<< HEAD
 		if($this->LOADED) return 1;
+=======
+>>>>>>> 2b411c602f2720fa7a86d88c2af9212d38ed2033
 		parent::Load();
 		$MEM = memory_get_usage();
 		$this->PAGE_MANAGER = new Pagemanager(simplexml_load_file($this->XML_SRC), $this->ASSET_ROOT);
 		__APPEND_LOG("XML Memory allocation:".(memory_get_usage()-$MEM));
+<<<<<<< HEAD
 		$this->LOADED = true;
+=======
+>>>>>>> 2b411c602f2720fa7a86d88c2af9212d38ed2033
 	}
 	
 	// ARGS
@@ -36,12 +42,15 @@ class phpTemplaterModule extends Module{
 				return $this->PAGE_MANAGER->get_page($args['LABEL']);
 		}
 	}
+<<<<<<< HEAD
 	
 	function __destruct(){
 		$hold = memory_get_usage();
 		unset($this->PAGE_MANAGER);
 		__APPEND_LOG($this->MODULEName." destructed, freed ".((memory_get_usage()-$hold)/1024)."KB");
 	}
+=======
+>>>>>>> 2b411c602f2720fa7a86d88c2af9212d38ed2033
 }
 
 
