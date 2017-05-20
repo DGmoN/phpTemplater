@@ -41,17 +41,14 @@ class Pagemanager{
 			return new Page($page[0], $this);
 		}else{
 			__APPEND_LOG("No such page found");
-			return new Page($this->XML_DATA->xpath("page[@url='404']")[0], $this);
+			return 0;
 		}
 	}
-<<<<<<< HEAD
 	
 	function __destruct(){
 		$this->XML_DATA = null;
 		unset($this->XML_DATA);
 	}
-=======
->>>>>>> 2b411c602f2720fa7a86d88c2af9212d38ed2033
 }
 
 class Page{
